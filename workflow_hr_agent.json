@@ -1,0 +1,558 @@
+{
+  "name": "INM_AG_CLASE_3_FLUJO1",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Edit Fields').item.json.messageText }}",
+        "options": {
+          "systemMessage": "Eres el HR Buddy, asistente virtual de RR. HH. de ChocolaTech.\nREGLAS:\n\nResponde siempre en español.\nResponde SOLO dudas relacionadas con RR. HH.\nIDENTIFICACIÓN DEL EMPLEADO:\nSi el usuario no dice quién es, pregúntale su nombre completo en la primera respuesta.\nUsa la herramienta MySQL para buscar en la tabla funcionarios usando SIEMPRE el NOMBRE COMPLETO informado por el usuario en la conversación.\nSi se encuentra: usa los saldos de vacaciones y banco de horas.\nSi no se encuentra: no inventes datos personales. Responde solo con base en las políticas generales de RR. HH. del Vector Store.\nUsa la base de conocimientos para dudas generales."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        560,
+        -144
+      ],
+      "id": "13ee0bc1-fbad-4c86-8632-99f9f50d8604",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatCohere",
+      "typeVersion": 1,
+      "position": [
+        560,
+        64
+      ],
+      "id": "387cdf1c-2490-4967-a4df-e824a8098632",
+      "name": "Cohere Chat Model",
+      "credentials": {
+        "cohereApi": {
+          "id": "ryXc9oRdj9JAgxlB",
+          "name": "Cohere account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $('Telegram Trigger').item.json.message.chat.id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        704,
+        208
+      ],
+      "id": "99b0a37e-cfcc-47dd-9d3a-1ed3ad38e98a",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "mode": "retrieve-as-tool",
+        "toolDescription": "Buscar informaciones sobre RH, asuntos con vacaciones, horarios, etc",
+        "memoryKey": {
+          "__rl": true,
+          "mode": "list",
+          "value": "vector_store_key"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.vectorStoreInMemory",
+      "typeVersion": 1.3,
+      "position": [
+        816,
+        16
+      ],
+      "id": "05f28250-0395-4dc3-a609-6798e82359e4",
+      "name": "Simple Vector Store"
+    },
+    {
+      "parameters": {
+        "modelName": "embed-multilingual-v3.0"
+      },
+      "type": "@n8n/n8n-nodes-langchain.embeddingsCohere",
+      "typeVersion": 1,
+      "position": [
+        960,
+        160
+      ],
+      "id": "fa73f540-ec44-4e1e-bdb1-c969b0879513",
+      "name": "Embeddings Cohere",
+      "credentials": {
+        "cohereApi": {
+          "id": "ryXc9oRdj9JAgxlB",
+          "name": "Cohere account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "select",
+        "table": {
+          "__rl": true,
+          "value": "empleados",
+          "mode": "list",
+          "cachedResultName": "empleados"
+        },
+        "where": {
+          "values": [
+            {
+              "column": "nombre",
+              "condition": "LIKE",
+              "value": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('values0_Value', `Usa siempre el formato %Nombre% para búsqueda parcial. Por ejemplo Eric Moné%`, 'string') }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySqlTool",
+      "typeVersion": 2.5,
+      "position": [
+        848,
+        288
+      ],
+      "id": "dc03ba08-ddbc-4b5b-a44c-fe80dbaf0e7c",
+      "name": "Select rows from a table in MySQL",
+      "credentials": {
+        "mySql": {
+          "id": "2wXkLrqeXaXPErC8",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.3,
+      "position": [
+        -224,
+        -48
+      ],
+      "id": "1017f1b0-3017-4cf9-911c-ae3a6120d9e2",
+      "name": "Telegram Trigger",
+      "webhookId": "52349205-f610-4525-8ca2-1677804a9453",
+      "credentials": {
+        "telegramApi": {
+          "id": "QoULyyTxoYD4hEwr",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        864,
+        -224
+      ],
+      "id": "197a5ecc-e57e-4ee1-8e04-cb1aef4132bf",
+      "name": "Send a text message",
+      "webhookId": "afcb8e21-36e9-488a-9942-726b981fc62d",
+      "credentials": {
+        "telegramApi": {
+          "id": "QoULyyTxoYD4hEwr",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "b7869db2-9d3e-483a-a362-5e135fc69b5d",
+              "name": "=telegramUserId",
+              "value": "={{ $json.message.from.id }}",
+              "type": "string"
+            },
+            {
+              "id": "4eb1eee6-8e93-44bd-be63-69d1949cd5f6",
+              "name": "=messageText",
+              "value": "={{ $json.message.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        80,
+        80
+      ],
+      "id": "129495e3-d47b-4b22-9c80-bc8d6f2db662",
+      "name": "Edit Fields"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 3
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.message.text }}",
+                    "rightValue": "/^(h[o0]la|holi|buenos d[ií]as|buenas tardes|buenas noches|buenas|hey|qu[eé] tal|q tal|hi|hello|ayuda|test|probando).*/i",
+                    "operator": {
+                      "type": "string",
+                      "operation": "regex"
+                    },
+                    "id": "c6c2ed86-d69a-49d9-8b6c-73d9ee565022"
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra"
+        }
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        -64,
+        -48
+      ],
+      "id": "ade7f5d8-b1e5-432f-91a3-cb1dc7f1f408",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $('Telegram Trigger').item.json.message.text }}",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "Eres el asistente virtual de RR.HH. de la empresa.\nSaluda amablemente y pide el nombre completo de la persona \npara poder ayudarle con su información laboral.\nNo inventes ningún dato sobre empleados."
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.9,
+      "position": [
+        112,
+        -272
+      ],
+      "id": "e0bbc7f4-0d45-433f-8257-d3f5d53cfb64",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "={{ $json.text }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        384,
+        -272
+      ],
+      "id": "a0597ba9-8256-4e74-820a-d0778429e17d",
+      "name": "Send a text message1",
+      "webhookId": "974d0224-e49c-42e5-b6fe-2a16e3dfb0fe",
+      "credentials": {
+        "telegramApi": {
+          "id": "QoULyyTxoYD4hEwr",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatCohere",
+      "typeVersion": 1,
+      "position": [
+        208,
+        -112
+      ],
+      "id": "d677d748-0e42-4390-b15e-78c3266cfd85",
+      "name": "Cohere Chat Model1",
+      "credentials": {
+        "cohereApi": {
+          "id": "ryXc9oRdj9JAgxlB",
+          "name": "Cohere account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "executeQuery",
+        "query": "SELECT * FROM empleados\nWHERE telegram_id = {{ $('Edit Fields').item.json.telegramUserId }}\nLIMIT 1",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.mySql",
+      "typeVersion": 2.5,
+      "position": [
+        240,
+        112
+      ],
+      "id": "edbf93dd-36b3-4f67-aed4-58ce3fa6a58d",
+      "name": "Execute a SQL query",
+      "credentials": {
+        "mySql": {
+          "id": "2wXkLrqeXaXPErC8",
+          "name": "MySQL account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose",
+            "version": 3
+          },
+          "conditions": [
+            {
+              "id": "fe18f10d-084d-430c-8ce5-20e175f3ca16",
+              "leftValue": "={{ $json.id ?? '' }}",
+              "rightValue": "={{ Number($('Edit Fields').item.json.telegramUserId) }}",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "looseTypeValidation": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        384,
+        48
+      ],
+      "id": "257e626c-038f-42bf-8b36-1a5a6b8f042a",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.chat.id }}",
+        "text": "No puedes solicitar información de otra persona, solo de ti mismo.",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        528,
+        288
+      ],
+      "id": "2f273a9f-c8e3-4ecc-862c-bb1c6765201d",
+      "name": "Send a text message2",
+      "webhookId": "dae26fcb-e1cf-4104-90f0-6baca3ba5610",
+      "credentials": {
+        "telegramApi": {
+          "id": "QoULyyTxoYD4hEwr",
+          "name": "Telegram account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Cohere Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Simple Vector Store": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Embeddings Cohere": {
+      "ai_embedding": [
+        [
+          {
+            "node": "Simple Vector Store",
+            "type": "ai_embedding",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select rows from a table in MySQL": {
+      "ai_tool": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "Execute a SQL query",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Send a text message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cohere Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Execute a SQL query": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Send a text message2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "d97bc141-38df-492c-a110-e048faa95287",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b08e5ee413dea98a09e1f301c0e0050181360e7b3f685b131df160bc3242070e"
+  },
+  "id": "iI2b2IzjQD1jQJY9",
+  "tags": []
+}
