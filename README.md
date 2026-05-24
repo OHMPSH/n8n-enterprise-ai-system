@@ -2,7 +2,7 @@
 
 Asistente de IA corporativo con validación cruzada Zero-Trust. Construido sobre n8n, integrando Telegram, MySQL y Cohere RAG.
 
-![Workflow Diagram](n8n_full_workflow.jpeg)
+![Workflow Diagram](assets/n8n_full_workflow.jpeg)
 
 ## Características Clave
 
@@ -53,7 +53,7 @@ CREATE TABLE empleados (
     salario_neto DECIMAL(10, 2) NOT NULL DEFAULT 0.00,  
     telegram_id BIGINT UNIQUE NOT NULL -- Huella digital inmutable del dispositivo
 );
-'''
+```
 
 Consideraciones de Seguridad (Auditoría de Producción)
 Mitigación de Inyección SQL: Las llamadas en el nodo MySQL están parametrizadas y procesadas mediante sintaxis segura nativa de n8n, impidiendo ataques de inyección por caracteres especiales.
